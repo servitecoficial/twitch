@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LockWeen - Twitch</title>
+    <style>
+        :root {
+            --twitch-purple: #9146FF;
+            --twitch-dark: #0E0E10;
+            --twitch-light-dark: #18181B;
+            --twitch-gray: #1F1F23;
+            --twitch-text: #EFEFF1;
+            --twitch-light-text: #ADADB8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--twitch-dark);
+            color: var(--twitch-text);
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* Media queries para dispositivos móviles */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .chat-container {
+                width: 100%;
+                height: 40vh;
+                border-left: none;
+                border-top: 1px solid #3A3A3D;
+            }
+            
+            .main-content {
+                height: 60vh;
+            }
+            
+            .stream-container {
+                height: 70%;
+            }
+            
+            .nav-links {
+                display: none;
+            }
+            
+            .search-bar {
+                width: 150px;
+            }
+            
+            .stream-info {
+                padding: 10px;
+            }
+            
+            .chat-messages {
+                max-height: 25vh;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .search-bar {
+                display: none;
+            }
+            
+            .stream-title {
+                font-size: 16px;
+            }
+            
+            .follow-button, .subscribe-button {
+                padding: 3px 10px;
+                font-size: 12px;
+            }
+        }
+
+        .navbar {
+            background-color: var(--twitch-gray);
+            height: 50px;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            justify-content: space-between;
+            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .logo {
+            color: var(--twitch-purple);
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .nav-links {
+            display: flex;
+        }
+
+        .nav-links a {
+            color: var(--twitch-text);
+            text-decoration: none;
+            margin-left: 20px;
+            font-size: 14px;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+        }
+
+        .search-bar {
+            background-color: var(--twitch-light-dark);
+            border: 1px solid #3A3A3D;
+            border-radius: 6px;
+            padding: 5px 10px;
+            color: var(--twitch-text);
+            margin-right: 20px;
+            width: 300px;
+        }
+
+        .search-bar::placeholder {
+            color: var(--twitch-light-text);
+        }
+
+        .profile-icon {
+            width: 30px;
+            height: 30px;
+            background-color: #ef4444;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .mi-div {
+  width: 15%; /* Ajusta el tamaño según necesites */
+  height: 15%px; /* Debe ser igual al ancho para que sea un círculo */
+  overflow: hidden; /* Recorta cualquier parte de la imagen que se salga del círculo */
+  border-radius: 50%; /* La clave para hacerlo redondo */
+}
+
+.mi-div img {
+  width: 100%; /* Asegura que la imagen llene el contenedor */
+  height: auto; /* Mantiene la proporción de la imagen */
+  display: block; /* Evita espacios extra debajo de la imagen */
+}
+
+        .container {
+            display: flex;
+            height: calc(100vh - 50px);
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stream-container {
+            position: relative;
+            background-color: black;
+            width: 100%;
+            height: 70%;
+        }
+
+        .video-display {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .live-indicator {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background-color: #f00;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .viewer-count {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            background-color: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background-color: #f00;
+            border-radius: 50%;
+        }
+
+        .stream-info {
+            padding: 20px;
+            background-color: var(--twitch-light-dark);
+        }
+
+        .stream-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .streamer-name {
+            font-size: 16px;
+            color: var(--twitch-light-text);
+            margin-bottom: 10px;
+        }
+
+        .stream-tags {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .tag {
+            background-color: var(--twitch-gray);
+            color: var(--twitch-light-text);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+
+        .chat-container {
+            width: 340px;
+            background-color: var(--twitch-light-dark);
+            border-left: 1px solid #3A3A3D;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            padding: 10px;
+            border-bottom: 1px solid #3A3A3D;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+            font-size: 14px;
+            background-color: #1a1a1d;
+        }
+
+        .chat-message {
+            margin-bottom: 6px;
+            word-wrap: break-word;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .user-avatar {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+            margin-right: 5px;
+            flex-shrink: 0;
+        }
+
+        .message-content {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .username {
+            font-weight: bold;
+            margin-right: 5px;
+            text-shadow: 0.5px 0.5px 1px rgba(0, 0, 0, 0.5);
+        }
+
+        .chat-input {
+            padding: 10px;
+            border-top: 1px solid #3A3A3D;
+        }
+
+        .chat-input input {
+            width: 100%;
+            background-color: var(--twitch-gray);
+            border: 1px solid #3A3A3D;
+            border-radius: 4px;
+            padding: 8px;
+            color: var(--twitch-text);
+        }
+
+        .chat-input input::placeholder {
+            color: var(--twitch-light-text);
+        }
+
+        .username.mod {
+            color: #00b173;
+        }
+
+        .username.vip {
+            color: #e261ff;
+        }
+
+        .username.sub {
+            color: #00a0d6;
+        }
+
+        .emote {
+            display: inline-block;
+            vertical-align: middle;
+            width: 24px;
+            height: 24px;
+            margin: 0 3px;
+        }
+
+        .follow-button {
+            background-color: var(--twitch-purple);
+            color: white;
+            padding: 5px 15px;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-left: 20px;
+        }
+
+        .subscribe-button {
+            background-color: #3a3a3d;
+            color: var(--twitch-text);
+            padding: 5px 15px;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    
+@media (max-width: 480px) {
+    .chat-container {
+        width: 100%;
+        height: 50vh;
+    }
+
+    .video-display {
+        object-fit: contain;
+    }
+
+    .stream-container {
+        height: 50vh;
+    }
+
+    .stream-info {
+        padding: 10px;
+        font-size: 14px;
+    }
+
+    .stream-title {
+        font-size: 16px;
+    }
+
+    .username {
+        font-size: 12px;
+    }
+
+    .chat-message {
+        font-size: 12px;
+    }
+
+    .follow-button,
+    .subscribe-button {
+        font-size: 12px;
+        padding: 4px 8px;
+    }
+}
+
+
+.video-display.mirror {
+    transform: scaleX(-1);
+}
+
+</style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="logo"><img src="logo.png" width="20%" alt=""></div>
+        <div class="nav-links">
+            <a href="#">Explorar</a>
+            <a href="#">Esports</a>
+            <a href="#">Música</a>
+        </div>
+
+        <div class="nav-right">
+            <input type="text" class="search-bar" placeholder="Buscar...">
+            <div class="mi-div">
+                <img src="lock.png" width="10" alt="Descripción de la imagen">
+              </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="main-content">
+            <div class="stream-container">
+                <video id="video-display" class="video-display" autoplay muted></video>
+                <div class="live-indicator">LIVE</div>
+                <div class="viewer-count">
+                    <div class="dot"></div>
+                    <span id="viewer-count">100,000</span> espectadores
+                </div>
+            </div>
+            <div class="stream-info">
+                <div class="stream-title">¡Streaming en vivo! - Consejos y charla con los viewers</div>
+                <div class="streamer-name">LockWeen</div>
+                <button class="follow-button">Seguir</button>
+                <button class="subscribe-button">Suscribirse</button>
+                <div class="stream-tags">
+                    <div class="tag">Español</div>
+                    <div class="tag">Charla</div>
+                    <div class="tag">Consejos</div>
+                    <div class="tag">IRL</div>
+                </div>
+            </div>
+        </div>
+        <div class="chat-container">
+            <div class="chat-header">
+                <span>Chat de la transmisión</span>
+                <span>🔧</span>
+            </div>
+            <div class="chat-messages" id="chat-messages">
+                <!-- Los mensajes se añadirán dinámicamente aquí -->
+            </div>
+            <div class="chat-input">
+                <input type="text" placeholder="Enviar un mensaje..." disabled>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Acceso a la cámara
+        const videoElement = document.getElementById('video-display');
+        
+        
+// Control para alternar entre cámaras
+let useFrontCamera = true;
+
+// Configura el acceso a la cámara con reflejo para cámara frontal
+async function setupCamera() {
+    try {
+        const constraints = {
+            video: {
+                facingMode: useFrontCamera ? 'user' : 'environment'
+            }
+        };
+
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        videoElement.srcObject = stream;
+
+        // Aplicar o quitar clase de espejo según la cámara usada
+        if (useFrontCamera) {
+            videoElement.classList.add('mirror');
+        } else {
+            videoElement.classList.remove('mirror');
+        }
+    } catch (error) {
+        console.error('Error al acceder a la cámara:', error);
+        videoElement.style.backgroundColor = 'black';
+    }
+}
+
+// Evento para cambiar de cámara al hacer doble toque sobre el video
+videoElement.addEventListener('dblclick', () => {
+    useFrontCamera = !useFrontCamera;
+    setupCamera();
+});
+
+// Inicia la cámara por primera vez
+setupCamera();
+});
+
+setupCamera();
+
+        // Simulación de espectadores
+        const viewerCountElement = document.getElementById('viewer-count');
+        
+        function updateViewerCount() {
+            // Generar un número aleatorio entre 100,000 y 200,000
+            const viewers = Math.floor(Math.random() * 100000) + 100000;
+            viewerCountElement.textContent = viewers.toLocaleString();
+        }
+        
+        // Actualizar cada 10 segundos
+        setInterval(updateViewerCount, 10000);
+
+        // Simulación de chat
+        const chatMessages = document.getElementById('chat-messages');
+        
+        // Nombres de usuario para el chat
+        const usernames = [
+            'uncertified_santigtgamer', 'Project_11dmc', 'luna_plateads222', 'yawnzzzmz',
+            'andrea_tomatito', 'LenLawliet', 'Veroguevara', 'AlwaysAlele', 'razor_jk',
+            'MarcoD23', 'lizhopi', 'Dimpsac', 'Arsenicoooo', 'FanDeTwitch23', 'GamerPro99', 
+            'StreamLover', 'TwitchFan2025', 'EliteViewer', 'NinjaFan', 'PokimaneAdmirer', 
+            'XQCwatcher', 'LudwigSubscriber', 'HasanEnjoyer', 'MrBeastDonator', 'ValkyraeFan', 
+            'SykkunoWatcher', 'TwitchPrime123', 'DonoBoy', 'ChatExpert', 'MemeLord420', 
+            'StreamSniper', 'GiftSubGiver', 'EmoteSpammer', 'ChatterBox', 'ModeratorFriend', 
+            'LurkerKing', 'FirstTimer', 'RegularViewer', 'LockWeen_Fan01', 'LockWeenLover', 
+            'Alan_Biggest_Fan', 'AlanAdviceSeeker', 'TuMejorSub', 'ConsejosPorfa', 'TuFanNumero1'
+        ];
+        
+        // Colores para los nombres de usuario
+        const colors = [
+            '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#00FFFF',
+            '#FF00FF', '#FFA500', '#800080', '#008000', '#800000',
+            '#008080', '#000080', '#FFC0CB', '#FFD700', '#C0C0C0'
+        ];
+        
+        // Mensajes para el chat
+        const messages = [
+            '¡Hola Alan! Soy nuevo aquí',
+            '¿Cómo estás hoy LockWeen?',
+            'LOL',
+            'KEKW',
+            'Poggers',
+            '¡Me encanta tu stream LockWeen!',
+            'Alan sos lo más',
+            'OMEGALUL',
+            '¡Saludos desde Argentina! LockWeen eres lo mejor',
+            '¿Cuánto tiempo llevas en Twitch, Alan?',
+            'Acabo de seguirte LockWeen',
+            'Me subscribí por 3 meses. LockWeen es la onda',
+            'AYAYA Alan sos crack',
+            'LUL',
+            '¿Alan me darías un consejo para comenzar en streaming?',
+            'Hola a todos en el chat, LockWeen es increíble',
+            'Primera vez viendo tu stream LockWeen',
+            '¡Qué genial es este stream!',
+            'PogChamp LockWeen es la onda',
+            'MonkaS',
+            '¡Gracias por el stream, Alan!',
+            '¿Tienes Discord, LockWeen?',
+            '¿Cuántas horas transmites al día, Alan?',
+            'FeelsGoodMan LockWeen me inspiraste',
+            'FeelsBadMan',
+            'Pog Alan es el mejor streamer',
+            '¡LockWeen sos increíble!',
+            '¿LockWeen, me das un consejo para mejorar en juegos?',
+            '¿Alan, qué equipamiento usas para stream?',
+            'ResidentSleeper',
+            'VoHiYo LockWeen eres genial',
+            'Kreygasm',
+            'KappaPride Alan sos lo más',
+            'Yo sigo a LockWeen desde que tenía pocos viewers',
+            '¡Saludos desde España! Alan me encantan tus directos',
+            '¡Saludos desde México! LockWeen eres la onda',
+            '¡Saludos desde Chile! Alan sos increíble',
+            '¡Saludos desde Colombia! Gracias por tus consejos LockWeen',
+            '¡Saludos desde Perú! Alan cambiaste mi forma de jugar',
+            '¡Saludos desde Venezuela! LockWeen el mejor',
+            'TriHard',
+            'CmonBruh',
+            'BibleThump',
+            '¿A qué hora transmites normalmente, LockWeen?',
+            '¿Alan, cómo hiciste para crecer tanto en Twitch?',
+            '¿LockWeen, me das algún consejo para estudiar?',
+            '¿Alan, qué opinas sobre el meta actual?',
+            '¿LockWeen tienes YouTube?',
+            '¡Me encanta tu voz, Alan!',
+            '¡LockWeen es la mejor comunidad!',
+            '¿Cuánto tiempo más vas a estar en directo, Alan?',
+            'LockWeen dame consejos para mejorar mi aim',
+            'Alan, tus consejos me ayudaron mucho, gracias',
+            'LockWeen es el streamer más infravalorado',
+            'Alan, ¿qué técnicas usas para mantener la calma en rankeds?',
+            'LockWeen, tus tips me ayudaron a subir de rango',
+            'Alan, gracias por inspirarme a empezar mi canal',
+            'LockWeen, sos el streamer más entretenido',
+            'Alan, ¿me darías un consejo para ser más constante?',
+            'LockWeen, tu comunidad es la mejor',
+            'Alan, gracias por ser tan auténtico',
+            'LockWeen, ¿qué periféricos me recomiendas?',
+            'Alan, seguí tus consejos y mejoré muchísimo',
+            'LockWeen es la onda, nadie lo puede negar',
+            'Alan, ¿cuál es tu secreto para estar siempre positivo?',
+            'LockWeen, gracias por motivarme todos los días',
+            'Alan, tus streams me alegran el día',
+            'LockWeen, necesito tu consejo para una situación...',
+            'Alan, ¿qué haces cuando te sientes desmotivado?',
+            'LockWeen cambió la forma en que veo el streaming',
+            'Alan sos el GOAT, no hay discusión'
+        ];
+
+        // Emotes de Twitch
+        const emotes = [
+            'Kappa', 'PogChamp', 'LUL', 'KEKW', 'OMEGALUL', 'MonkaS', 'PepeHands',
+            'AYAYA', 'TriHard', 'ResidentSleeper', 'BibleThump', 'DansGame', 'Kreygasm',
+            'PepeLaugh', 'Sadge', 'ForsenCD', 'CmonBruh', '4Head', 'WutFace', 'FrankerZ',
+            'PogU', 'Pepega', 'widepeepoHappy', 'monkaW', 'POGGERS', 'WeirdChamp', 'monkaHmm',
+            'catJAM', 'HYPERS', 'KEKL', 'pepeJAM', 'pepeD', 'LULW', 'FeelsStrongMan', 'monkaX', 
+            'gachiHYPER', 'xqcL', 'HeyGuys', 'KKona', 'EZ', 'Clap', 'YEP', 'NOIDONTTHINKSO',
+            'TwitchRPG', 'SeemsGood', 'NotLikeThis', 'COGGERS', 'MEGALUL', 'pepeAgony', 'LockWPOG'
+        ];
+
+        function getRandomElement(array) {
+            return array[Math.floor(Math.random() * array.length)];
+        }
+        
+        function generateRandomMessage() {
+            let message = '';
+            
+            // 70% de probabilidad de incluir un emote al inicio
+            if (Math.random() > 0.3) {
+                message += getRandomElement(emotes) + ' ';
+            }
+            
+            // Mensaje principal
+            message += getRandomElement(messages);
+            
+            // 60% de probabilidad de incluir un emote al final
+            if (Math.random() > 0.4) {
+                message += ' ' + getRandomElement(emotes);
+            }
+            
+            // 30% de probabilidad de incluir un segundo emote al final
+            if (Math.random() > 0.7) {
+                message += ' ' + getRandomElement(emotes);
+            }
+            
+            return message;
+        }
+        
+        function getRandomUserType() {
+            const rand = Math.random();
+            if (rand < 0.02) return 'broadcaster'; // 2% broadcaster (para simular mensajes tuyos)
+            if (rand < 0.07) return 'mod'; // 5% moderadores
+            if (rand < 0.17) return 'vip'; // 10% VIPs
+            if (rand < 0.37) return 'sub'; // 20% suscriptores
+            return ''; // 63% usuarios normales
+        }
+        
+        function addChatMessage() {
+            const username = getRandomElement(usernames);
+            const message = generateRandomMessage();
+            const color = getRandomElement(colors);
+            const userType = getRandomUserType();
+            const avatarId = Math.floor(Math.random() * 100) + 1;
+            
+            const messageElement = document.createElement('div');
+            messageElement.className = 'chat-message';
+            
+            const avatarElement = document.createElement('img');
+            avatarElement.className = 'user-avatar';
+            avatarElement.src = `https://avatars.dicebear.com/api/identicon/${username}.svg`;
+            avatarElement.alt = username;
+            
+            const messageContentElement = document.createElement('div');
+            messageContentElement.className = 'message-content';
+            
+            const usernameElement = document.createElement('span');
+            usernameElement.className = `username ${userType}`;
+            usernameElement.style.color = color;
+            usernameElement.textContent = username + ':';
+            
+            const messageTextElement = document.createElement('span');
+            
+            // Procesar el mensaje para reemplazar los emotes con imágenes
+            let messageHTML = ' ' + message;
+            
+            // Emotes regulares
+            emotes.forEach(emote => {
+                const regex = new RegExp(`\\b${emote}\\b`, 'g');
+                messageHTML = messageHTML.replace(regex, `<img src="/api/placeholder/20/20" alt="${emote}" class="emote" />`);
+            });
+            
+            // Emojis específicos como los del ejemplo
+            messageHTML = messageHTML.replace(/xd/gi, ' 😂 ');
+            messageHTML = messageHTML.replace(/LMAO/gi, ' 🤣 ');
+            messageHTML = messageHTML.replace(/PFFF/gi, ' 😤 ');
+            messageHTML = messageHTML.replace(/XD/gi, ' 😆 ');
+            messageHTML = messageHTML.replace(/xdd/gi, ' 😂😂 ');
+            messageHTML = messageHTML.replace(/xddd/gi, ' 😂😂😂 ');
+            
+            // Emojis repetidos como en el ejemplo
+            if (Math.random() > 0.8) {
+                const randomEmoji = ['🔥', '💯', '👑', '❤️', '😂'][Math.floor(Math.random() * 5)];
+                let repeatedEmoji = '';
+                const repetitions = Math.floor(Math.random() * 4) + 2;
+                for (let i = 0; i < repetitions; i++) {
+                    repeatedEmoji += randomEmoji + ' ';
+                }
+                messageHTML += ' ' + repeatedEmoji;
+            }
+            
+            messageTextElement.innerHTML = messageHTML;
+            
+            messageContentElement.appendChild(usernameElement);
+            messageContentElement.appendChild(messageTextElement);
+            
+            messageElement.appendChild(avatarElement);
+            messageElement.appendChild(messageContentElement);
+            
+            chatMessages.appendChild(messageElement);
+            
+            // Mantener el scroll en la parte inferior
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // Limitar la cantidad de mensajes (para evitar problemas de rendimiento)
+            if (chatMessages.children.length > 100) {
+                chatMessages.removeChild(chatMessages.children[0]);
+            }
+        }
+        
+        // Generar entre 2 y 5 mensajes cada 0.5-1.5 segundos (más intensidad en el chat)
+        function scheduleNextMessages() {
+            const messagesCount = Math.floor(Math.random() * 4) + 2;
+            
+            for (let i = 0; i < messagesCount; i++) {
+                setTimeout(addChatMessage, i * 200);
+            }
+            
+            const nextInterval = Math.floor(Math.random() * 1000) + 500;
+            setTimeout(scheduleNextMessages, nextInterval);
+        }
+        
+        // Iniciar el chat
+        scheduleNextMessages();
+
+        // Añadir algunos mensajes iniciales
+        for (let i = 0; i < 15; i++) {
+            addChatMessage();
+        }
+    </script>
+</body>
+</html>
